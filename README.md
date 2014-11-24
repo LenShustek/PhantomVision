@@ -24,3 +24,4 @@ DJI Phantom Vision+ Quadcopter remote controller firmware
  adjust for that in my head. I just have to keep the remote control box pointed to it.
 
 For a photo of the mods to the remote controller and a schematic, see the "issues" for this project.
+For a discussion on the DJI forum, see http://forum.dji.com/forum.php?mod=viewthread&tid=2287.
