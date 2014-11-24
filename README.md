@@ -1,7 +1,7 @@
 PhantomVision
 =============
 
-DJI Phantom Vision+ remote controller firmware
+DJI Phantom Vision+ Quadcopter remote controller firmware
 
  This adds a new and more intuitive flying mode for the Phantom 
  that is relative to the pilot, not the quadcopter. 
