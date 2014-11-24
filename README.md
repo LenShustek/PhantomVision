@@ -22,3 +22,5 @@ DJI Phantom Vision+ Quadcopter remote controller firmware
  Now I can spin it to have the camera point whereever I want, and it doesn't affect 
  how it flies. I don't have to remember where it was pointing when it took off and 
  adjust for that in my head. I just have to keep the remote control box pointed to it.
+
+For a photo of the mods to the remote controller and a schematic, see the "issues" for this project.
