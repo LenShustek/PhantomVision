@@ -23,6 +23,13 @@
  adjust for that in my head. I just have to keep the remote control box pointed to it.
  
  -- Len
+ 
+ Phantom setup in Phantom Vision 2 Assistant:
+   Naza-M mode (on upper menu bar)
+   Basic/RC: Control mode switch: GPS, ATTI, Failsafe
+   Advanced/IOC: on
+   
+ To fly, use GPS and COURSE LOCK modes, TEENSY mode, switch mometary to CAL after starting.
  ---------------------------------------------------------------------------------------------*/
 /*   (C) Copyright 2014, Len Shustek
  *
@@ -118,7 +125,7 @@ void mag_calibrate(void) {  // display calibration data until switch is changed 
     snprintf(report, sizeof(report), "min: {%+6d, %+6d, %+6d}   max: {%+6d, %+6d, %+6d}",
     running_min.x, running_min.y, running_min.z, running_max.x, running_max.y, running_max.z);
     Serial.println(report);
-    delay(250);
+    delay(250); // we should be slowly rotating the RC box
     check_mode_change();
   } 
   while (current_mode != MODE_OFF);
@@ -127,12 +134,16 @@ void mag_calibrate(void) {  // display calibration data until switch is changed 
 
 void mag_initialize(void) {  // start up the magnetometer/accelerometer
   char msg[60];
+
 #if DEBUG
   do { // wait for switch to TRANSLATE so we have a chance to start the serial monitor before any output
     check_mode_change();
   }  
   while (current_mode != MODE_TRANSLATE);
+#else
+  delay(1000); // we need to wait for the magnetomoter to stabilize after power up??
 #endif
+
   Wire.begin();
   if (! compass.init()) { 
 #if DEBUG
@@ -140,6 +151,7 @@ void mag_initialize(void) {  // start up the magnetometer/accelerometer
 #endif
     while(1) ;
   }
+
   compass.enableDefault();
   compass.writeReg(LSM303::CTRL5, 0x68); // change magnetometer from 6.25 Hz rate to 12.5 Hz rate
 
@@ -192,8 +204,8 @@ void setup(void) { //**********  SETUP  *****************
   mag_initialize();            // start magnetometer
 }
 
-void print_joystick(char *title, int x, int y) {  // print joystick position in raw volts, and maybe degrees if not centered
 #if DEBUG
+void print_joystick(char *title, int x, int y) {  // print joystick position in raw volts, and maybe degrees if not centered
   char msg[80];
   int xmid=512, ymid=512; // joystick neutral positions
   int xdef, ydef;
@@ -210,22 +222,21 @@ void print_joystick(char *title, int x, int y) {  // print joystick position in 
 
     Serial.print(msg);
   }
-#endif
 }
+#endif
+
 
 void loop(void) {  
 
-  int x, oldx, newx, center_x, leftx;
-  int y, oldy, newy, center_y, lefty;
+  int x, newx, center_x, leftx;
+  int y, newy, center_y, lefty;
   float RC_heading, takeoff_heading=0, rotation_angle;
 #if DEBUG
-  int deg, olddeg=0;
+  int oldx=0, oldy=0, deg, olddeg=0;
   boolean joystick_changed;
   char msg[60];
 #endif
 
-  oldx=0; 
-  oldy=0;
   center_x = analogRead(X_IN);  // remember joystick neutral position
   center_y = analogRead(Y_IN);
 
@@ -260,8 +271,7 @@ void loop(void) {
     y = analogRead(Y_IN);
 #if DEBUG    
     joystick_changed = false;
-    if (abs(x-oldx)>=THRESHOLD_POS || abs(y-oldy)>=THRESHOLD_POS) { // print if changed
-      char msg[40];
+    if (abs(x-oldx)>=THRESHOLD_POS || abs(y-oldy)>=THRESHOLD_POS) { // print if significantly changed
       print_joystick("stick", x, y);
       joystick_changed = true;
       oldx=x;
@@ -294,8 +304,8 @@ void loop(void) {
       // on the ground for this maneuver!
       leftx = analogRead(XL_IN); 
       lefty = analogRead(YL_IN);
-      int csc_min = (int)(1.42/3.3*1024.); // need some way to calibrate these voltages dynamically
-      int csc_max = (int)(1.85/3.3*1024.); // because they may vary from RC to RC
+      int csc_min = (int)(1.45/3.3*1024.); // need some way to calibrate these voltages dynamically
+      int csc_max = (int)(1.85/3.3*1024.); // because they will vary from RC to RC
       // Note that the two sticks are opposite polarity both for X and Y
       if (leftx < csc_max || lefty > csc_min || x < csc_max || y < csc_max) { // not CSC, so rotate
         digitalWrite(LED, HIGH); // on
@@ -306,7 +316,7 @@ void loop(void) {
         newx = center_x + (int)((x-center_x)*cos(rotation_angle) - (y-center_y)*sin(rotation_angle));
         newy = center_y + (int)((x-center_x)*sin(rotation_angle) + (y-center_y)*cos(rotation_angle));
 #if DEBUG
-        if (joystick_changed) { // print if changed
+        if (joystick_changed) { // print rotated value if changed
           Serial.print(", rotation "); 
           Serial.print((int)(rotation_angle * 180./PI));
           print_joystick(", new stick", newx, newy);
@@ -325,4 +335,7 @@ void loop(void) {
     delay (90);  // magnetometer rate is 12.5 Hz, or 80 msec
   }
 }
+
+
+
 
